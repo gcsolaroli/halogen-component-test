@@ -1,5 +1,7 @@
 # Halogen component test
 
+Simple project to experiment and try to understand how to use Halogen 5.x components.
+
 ## Initial setup e first build
 
     > nvm install --lts (10.16.1)
