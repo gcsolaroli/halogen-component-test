@@ -1,5 +1,13 @@
 module Components.Main where
 
+import Control.Applicative (pure)
+import Data.Function (($), const)
+import Data.Void (Void)
+import Data.Unit (Unit, unit)
+import Effect.Aff.Class (class MonadAff)
+import Halogen as Halogen
+import Halogen.HTML as HTML
+
 {-
 - `surface` is the type that will be rendered by the component, usually `HTML`               :: Type -> Type -> Type
 - `query` is the query algebra; the requests that can be made of the component               :: Type -> Type
@@ -9,9 +17,12 @@ module Components.Main where
 -}
 
 type Surface = HTML.HTML
-type Query = 
+type Action = Void
+type Query = Void
 type Input = Void
 type Output = Void
+type State = Unit
+type Slots = ()
 
 {-
 The type variables involved:
@@ -35,13 +46,7 @@ The values in the record:
 -}
 
 initialState :: Input -> State
-initialState _ = {
-    passwordSettings: {
-        strength: Left VeryStrong,
-        characters: Left (arrayToSet [UppercaseLetters, LowercaseLetters, Digits])
-    },
-    password: Nothing
-}
+initialState _ = unit
 
 component :: forall m. MonadAff m => Halogen.Component Surface Query Input Output m
 component = Halogen.mkComponent {
@@ -50,3 +55,11 @@ component = Halogen.mkComponent {
     eval: Halogen.mkEval $ Halogen.defaultEval { handleAction = handleAction }
                     -- :: HalogenQ query action input ~> HalogenM state action slots output m
 }
+
+render :: forall m. State -> Halogen.ComponentHTML Action () m
+render state = HTML.div [] [
+            HTML.h1 [] [HTML.text "Hello!"]
+        ]
+
+handleAction ∷ forall m. MonadAff m => Action → Halogen.HalogenM State Action Slots Output m Unit
+handleAction = const (pure unit)
