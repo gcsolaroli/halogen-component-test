@@ -3,6 +3,7 @@ module Components.Main where
 import Control.Applicative (pure)
 import Data.Either (Either(..))
 import Data.Function (($), const)
+import Data.Maybe (Maybe(..))
 import Data.Unit (Unit, unit)
 import Data.Void (Void, absurd)
 import Effect.Aff.Class (class MonadAff)
@@ -19,10 +20,10 @@ import Halogen.HTML as HTML
 -}
 
 type Surface = HTML.HTML
-data Action = Void
-data Query a = Maybe a
-data Message = ()
-type Input = Void
+type Action = Void
+data Query a = SampleQuery a
+--type Message = ()
+type Input = Unit
 type Output = Void
 type State = Unit
 type Slots = ()
@@ -70,8 +71,7 @@ render state = HTML.div [] [
 handleAction ∷ forall m. MonadAff m => Action → Halogen.HalogenM State Action Slots Output m Unit
 handleAction = const (pure unit)
 
-handleQuery :: forall m a. Query a -> Halogen.HalogenM State Action Slots Message m (Maybe a)
+handleQuery :: forall m a. Query a -> Halogen.HalogenM State Action Slots Output m (Maybe a)
 handleQuery = case _ of
-  IsOn k -> do
-    enabled <- H.gets _.enabled
-    pure (Just (k enabled))
+  SampleQuery k -> do
+    pure (Just (k))
