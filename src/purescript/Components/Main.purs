@@ -1,14 +1,14 @@
 module Components.Main where
 
 import Control.Applicative (pure)
-import Data.Either (Either(..))
+-- import Data.Either (Either(..))
 import Data.Function (($), const)
 import Data.Maybe (Maybe(..))
 import Data.Unit (Unit, unit)
-import Data.Void (Void, absurd)
+-- import Data.Void (Void)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as Halogen
-import Halogen.Data.Slot (SlotStorage)
+-- import Halogen.Data.Slot (SlotStorage)
 import Halogen.HTML as HTML
 
 {-
@@ -20,12 +20,12 @@ import Halogen.HTML as HTML
 -}
 
 type Surface = HTML.HTML
-type Action = Void
+data Action = NoAction
 data Query a = SampleQuery a
 --type Message = ()
-type Input = Unit
-type Output = Void
-type State = Unit
+data Input = EmptyInput
+data Output = NoOutput
+data State = EmptyState
 type Slots = ()
 
 {-
@@ -50,7 +50,7 @@ The values in the record:
 -}
 
 initialState :: Input -> State
-initialState _ = unit
+initialState _ = EmptyState
 
 component :: forall m. MonadAff m => Halogen.Component Surface Query Input Output m
 component = Halogen.mkComponent {

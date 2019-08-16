@@ -4,7 +4,7 @@ Simple project to experiment and try to understand how to use Halogen 5.x compon
 
 ## Initial setup e first build
 
-    > nvm install --lts (10.16.1)
+    > nvm install --lts (10.16.3)
     > npm install -g purescript@0.13.2
     > npm install -g spago@0.9.0
     > npm install -g parcel-bundler@1.12.3
