@@ -7,6 +7,8 @@ import Data.Unit (Unit, unit)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as Halogen
 import Halogen.HTML as HTML
+import Halogen.HTML.Events as Events
+import Halogen.HTML.Properties as Properties
 
 -- import Halogen.Query.EventSource (finalize)
 
@@ -21,11 +23,11 @@ import Halogen.HTML as HTML
 type Slot = Halogen.Slot S_Query S_Output
 
 type S_Surface = HTML.HTML
-data S_Action = S_NoAction
+data S_Action = S_NoAction | S_Click
 data S_Query a = S_SampleQuery a
-data S_Input = S_EmptyInput
-data S_Output = S_NoOutput
-data S_State = S_EmptyState
+data S_Input = S_Input_Label String
+data S_Output = S_NoOutput | S_Click_Happened
+data S_State = S_State_Label String
 type S_Slots = ()
 
 {-
@@ -50,7 +52,7 @@ The values in the record:
 -}
 
 initialState :: S_Input -> S_State
-initialState _ = S_EmptyState
+initialState (S_Input_Label label) = S_State_Label label
 
 component :: forall m. {- MonadAff m => -} Halogen.Component S_Surface S_Query S_Input S_Output m
 component = Halogen.mkComponent {
@@ -62,18 +64,18 @@ component = Halogen.mkComponent {
         receive      = receive,         --  receive         :: Input -> Maybe Action
         initialize   = initialize,      --  initialize      :: Maybe Action
         finalize     = finalize         --  finalize        :: Maybe Action
-    }
-                    -- :: HalogenQ Query Action Input ~> HalogenM State Action Slots Output m
+    }               -- :: HalogenQ Query Action Input ~> HalogenM State Action Slots Output m
 }
 
 render :: forall m. S_State -> Halogen.ComponentHTML S_Action S_Slots m
-render state = HTML.div [] [
-    HTML.span [] [HTML.text "Button"]
-]
+render (S_State_Label label) = HTML.button [Properties.title label, Events.onClick \_ -> Just S_Click] [HTML.text label]
 
 handleAction ∷ forall m. {- MonadAff m => -} S_Action → Halogen.HalogenM S_State S_Action S_Slots S_Output m Unit
 handleAction = case _ of
-    S_NoAction -> pure unit
+    S_NoAction  -> do
+        pure unit
+    S_Click     -> do
+        Halogen.raise S_Click_Happened
 
 handleQuery :: forall m a. S_Query a -> Halogen.HalogenM S_State S_Action S_Slots S_Output m (Maybe a)
 handleQuery = const (pure Nothing)

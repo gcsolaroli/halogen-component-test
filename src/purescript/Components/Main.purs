@@ -8,6 +8,8 @@ import Data.Eq (class Eq)
 import Data.Function (($), const)
 import Data.Maybe (Maybe(..))
 import Data.Ord (class Ord)
+import Data.Semiring ((+))
+import Data.Show (show)
 import Data.Symbol (SProxy(..))
 import Data.Unit (Unit, unit)
 import Effect.Aff.Class (class MonadAff)
@@ -29,7 +31,7 @@ data Action     = NoAction | SubComponentOutput SubComponent.S_Output
 data Query a    = SampleQuery a
 data Input      = EmptyInput
 data Output     = NoOutput      -- aka Message
-data State      = EmptyState
+data State      = State Int
 
 newtype SlotIdentifier = SlotIdentifier Int
 derive instance eqSlotIdentifier  :: Eq  SlotIdentifier
@@ -64,7 +66,7 @@ The values in the record:
 -}
 
 initialState :: Input -> State
-initialState _ = EmptyState
+initialState _ = State 0
 
 component :: forall m. MonadAff m => Halogen.Component Surface Query Input Output m
 component = Halogen.mkComponent {
@@ -81,18 +83,20 @@ component = Halogen.mkComponent {
 }
 
 render :: forall m. {-MonadAff m =>-} State -> Halogen.ComponentHTML Action Slots m
-render state = HTML.div [] [
-    HTML.h1 [] [HTML.text "Hello!"],
-    HTML.h2 [] [HTML.text "Bye bye."],
-    HTML.div [] [
-        HTML.slot _component (SlotIdentifier 1) SubComponent.component SubComponent.S_EmptyInput (Just <<< SubComponentOutput)
-    ]
+render (State counter) = HTML.div [] [
+    HTML.h1  [] [HTML.text "Hello!"],
+    HTML.div [] [HTML.slot _component (SlotIdentifier 1) SubComponent.component (SubComponent.S_Input_Label "Label parameter") (Just <<< SubComponentOutput)],
+    HTML.div [] [HTML.text (show counter)]
 ]
 
 handleAction ∷ forall m. MonadAff m => Action → Halogen.HalogenM State Action Slots Output m Unit
 handleAction = case _ of
-    NoAction -> pure unit
-    SubComponentOutput (SubComponent.S_NoOutput) -> pure unit
+    NoAction ->
+        pure unit
+    SubComponentOutput (SubComponent.S_NoOutput) ->
+        pure unit
+    SubComponentOutput (SubComponent.S_Click_Happened) ->
+        Halogen.modify_ (\(State counter) -> State (counter + 1))
 
 handleQuery :: forall m a. Query a -> Halogen.HalogenM State Action Slots Output m (Maybe a)
 handleQuery = const (pure Nothing)
