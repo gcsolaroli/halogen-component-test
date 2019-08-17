@@ -1,12 +1,20 @@
 module Components.Main where
 
+import Components.Component as SubComponent
+
 import Control.Applicative (pure)
+import Control.Semigroupoid ((<<<))
+import Data.Eq (class Eq)
 import Data.Function (($), const)
 import Data.Maybe (Maybe(..))
+import Data.Ord (class Ord)
+import Data.Symbol (SProxy(..))
 import Data.Unit (Unit, unit)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as Halogen
 import Halogen.HTML as HTML
+
+-- import Halogen.Query.EventSource (finalize)
 
 {-
 - `surface` is the type that will be rendered by the component, usually `HTML`               :: Type -> Type -> Type
@@ -16,13 +24,23 @@ import Halogen.HTML as HTML
 - `m` is the effect monad used during evaluation                                             :: Type -> Type
 -}
 
-type Surface = HTML.HTML
-data Action = NoAction
-data Query a = SampleQuery a
-data Input = EmptyInput
-data Output = NoOutput
-data State = EmptyState
-type Slots = ()
+type Surface    = HTML.HTML
+data Action     = NoAction | SubComponentOutput SubComponent.S_Output
+data Query a    = SampleQuery a
+data Input      = EmptyInput
+data Output     = NoOutput      -- aka Message
+data State      = EmptyState
+
+newtype SlotIdentifier = SlotIdentifier Int
+derive instance eqSlotIdentifier  :: Eq  SlotIdentifier
+derive instance ordSlotIdentifier :: Ord SlotIdentifier
+
+type Slots = (
+    component :: SubComponent.Slot SlotIdentifier
+)
+
+_component :: SProxy "component"
+_component = SProxy
 
 {-
 The type variables involved:
@@ -50,25 +68,43 @@ initialState _ = EmptyState
 
 component :: forall m. MonadAff m => Halogen.Component Surface Query Input Output m
 component = Halogen.mkComponent {
-    initialState,   -- :: input -> state
-    render,         -- :: state -> surface (ComponentSlot surface slots m action) action
+    initialState,   -- :: Input -> State
+    render,         -- :: State -> Surface (ComponentSlot Surface Slots m Action) Action
     eval: Halogen.mkEval $ Halogen.defaultEval {
-        handleAction = handleAction,
-        handleQuery  = handleQuery
+        handleAction = handleAction,    --  handleAction    :: forall m. MonadAff m => Action → Halogen.HalogenM State Action Slots Output m Unit
+        handleQuery  = handleQuery,     --  handleQuery     :: forall m a. Query a -> Halogen.HalogenM State Action Slots Output m (Maybe a)
+        receive      = receive,         --  receive         :: Input -> Maybe Action
+        initialize   = initialize,      --  initialize      :: Maybe Action
+        finalize     = finalize         --  finalize        :: Maybe Action
     }
-                    -- :: HalogenQ query action input ~> HalogenM state action slots output m
+                    -- :: HalogenQ Query Action Input ~> HalogenM State Action Slots Output m
 }
 
-render :: forall m. State -> Halogen.ComponentHTML Action () m
+render :: forall m. {-MonadAff m =>-} State -> Halogen.ComponentHTML Action Slots m
 render state = HTML.div [] [
     HTML.h1 [] [HTML.text "Hello!"],
-    HTML.h2 [] [HTML.text "Bye bye."]
+    HTML.h2 [] [HTML.text "Bye bye."],
+    HTML.div [] [
+        HTML.slot _component (SlotIdentifier 1) SubComponent.component SubComponent.S_EmptyInput (Just <<< SubComponentOutput)
+    ]
 ]
 
 handleAction ∷ forall m. MonadAff m => Action → Halogen.HalogenM State Action Slots Output m Unit
-handleAction = const (pure unit)
+handleAction = case _ of
+    NoAction -> pure unit
+    SubComponentOutput (SubComponent.S_NoOutput) -> pure unit
 
 handleQuery :: forall m a. Query a -> Halogen.HalogenM State Action Slots Output m (Maybe a)
-handleQuery = case _ of
-  SampleQuery k -> do
-    pure (Just (k))
+handleQuery = const (pure Nothing)
+--handleQuery = case _ of
+--  SampleQuery k -> do
+--    pure (Just (k))
+
+receive :: Input -> Maybe Action
+receive = const Nothing
+
+initialize :: Maybe Action
+initialize = Just NoAction
+
+finalize :: Maybe Action
+finalize = Nothing
