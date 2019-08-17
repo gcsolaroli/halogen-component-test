@@ -1,14 +1,11 @@
 module Components.Main where
 
 import Control.Applicative (pure)
--- import Data.Either (Either(..))
 import Data.Function (($), const)
 import Data.Maybe (Maybe(..))
 import Data.Unit (Unit, unit)
--- import Data.Void (Void)
 import Effect.Aff.Class (class MonadAff)
 import Halogen as Halogen
--- import Halogen.Data.Slot (SlotStorage)
 import Halogen.HTML as HTML
 
 {-
@@ -22,7 +19,6 @@ import Halogen.HTML as HTML
 type Surface = HTML.HTML
 data Action = NoAction
 data Query a = SampleQuery a
---type Message = ()
 data Input = EmptyInput
 data Output = NoOutput
 data State = EmptyState
@@ -65,8 +61,9 @@ component = Halogen.mkComponent {
 
 render :: forall m. State -> Halogen.ComponentHTML Action () m
 render state = HTML.div [] [
-            HTML.h1 [] [HTML.text "Hello!"]
-        ]
+    HTML.h1 [] [HTML.text "Hello!"],
+    HTML.h2 [] [HTML.text "Bye bye."]
+]
 
 handleAction ∷ forall m. MonadAff m => Action → Halogen.HalogenM State Action Slots Output m Unit
 handleAction = const (pure unit)
